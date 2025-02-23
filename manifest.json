@@ -19,9 +19,12 @@
         "storage", 
         "alarms", 
         "notifications", 
-        "tabs"
+        "tabs", 
+        "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
     ],
     "host_permissions": [
-        "https://leetcode.com/graphql/"
-    ]
+  "https://leetcode.com/graphql/",
+  "<all_urls>"
+]
 }
