@@ -18,7 +18,8 @@
     "permissions":[
         "storage", 
         "alarms", 
-        "notifications"
+        "notifications", 
+        "tabs"
     ],
     "host_permissions": [
         "https://leetcode.com/graphql/"
