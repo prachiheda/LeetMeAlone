@@ -1,40 +1,31 @@
 import { fetchDailyProblem } from "./api/fetchDailyProblem.js";
 console.log("Background script loaded successfully!");
 // Fired when the browser starts up. b
-chrome.runtime.onStartup.addListener(() => {
-    updateDailyProblem();
-    logLocalStorage();
+chrome.runtime.onStartup.addListener(async () => {
+    await updateDailyProblem();  // ensures it's done
     tryOpenPOTDWithDelay();
-});
+  });
   
 
-// Fired when the extension is installed or updated
-chrome.runtime.onInstalled.addListener(() => {
-  updateDailyProblem();
-  logLocalStorage();
-  tryOpenPOTDWithDelay();
-});
-
-function updateDailyProblem() {
-  chrome.storage.local.get(["dailyProblem", "dailyProblemDate"], (result) => {
-    const { dailyProblem, dailyProblemDate } = result;
-    console.log(dailyProblemDate); 
-    console.log(getTodaysDate());
-    if (
-      !dailyProblem ||
-      !dailyProblemDate ||
-      dailyProblemDate !== getTodaysDate()
-    ) {
-      fetchDailyProblem();
-      console.log("updated link for leetcode potd");
-    }
+chrome.runtime.onInstalled.addListener(async () => {
+    await updateDailyProblem();  // ensures it's done
+    tryOpenPOTDWithDelay();
   });
-}
+
+async function updateDailyProblem() {
+    const { dailyProblem, dailyProblemDate, dailyProblemTitle, dailyProblemDifficulty } = await getStorage(["dailyProblem", "dailyProblemDate", "dailyProblemTitle", "dailyProblemDifficulty"]);
+    if (!dailyProblem || !dailyProblemTitle || !dailyProblemDifficulty ||  !dailyProblemDate || dailyProblemDate !== getTodaysDate()) {
+      await fetchDailyProblem();
+      console.log("Updated link for Leetcode POTD");
+    }
+    logLocalStorage(); // logs after everything is done
+  }
+  
 
 //try opening POTD. first get key from storage. 
 async function openPOTD() {
     try {
-        const url = await getFromStorage("dailyProblem");
+        const url = await getStorage("dailyProblem");
 
         if (!url) {
             console.error("Issue fetching and opening POTD: No URL found.");
@@ -72,21 +63,35 @@ function getTodaysDate() {
 }
 
 function logLocalStorage() {
-  chrome.storage.local.get(["dailyProblem", "dailyProblemDate"], (result) => {
+  chrome.storage.local.get(["dailyProblem", "dailyProblemDate", "dailyProblemTitle", "dailyProblemDifficulty"], (result) => {
     console.log("Current dailyProblem:", result.dailyProblem);
     console.log("Current dailyProblemDate:", result.dailyProblemDate);
+    console.log("Current dailyProblemTitle:", result.dailyProblemTitle);
+    console.log("Current dailyProblemDifficulty:", result.dailyProblemDifficulty);
   });
 }
 
-//get any key from storage
-function getFromStorage(key) {
+// Convert updateDailyProblem to a proper async function:
+function getStorage(keysOrKey) {
     return new Promise((resolve, reject) => {
-        chrome.storage.local.get([key], (result) => {
-            if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
-            } else {
-                resolve(result[key]);
-            }
-        });
+      // If it's a string, just pass it through; if it's an array, pass the array directly
+      const keysParam = typeof keysOrKey === "string"
+        ? keysOrKey
+        : keysOrKey; // (already an array)
+  
+      chrome.storage.local.get(keysParam, (result) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          // If the caller passed a string, resolve that one value.
+          // If the caller passed an array, resolve the entire object.
+          if (typeof keysOrKey === "string") {
+            resolve(result[keysOrKey]);
+          } else {
+            resolve(result);
+          }
+        }
+      });
     });
-}
+  }
+  

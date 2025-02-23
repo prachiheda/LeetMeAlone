@@ -15,6 +15,8 @@ export const fetchDailyProblem = async () => {
             date
             link
             question {
+              difficulty
+              title
               titleSlug
             }
           }
@@ -25,18 +27,30 @@ export const fetchDailyProblem = async () => {
     throw new Error(`Network response was not ok: ${response.status}`);
   }
   const data = await response.json();
+  console.log("API response question:", data.data.activeDailyCodingChallengeQuestion.question);
+
     const slug = data.data.activeDailyCodingChallengeQuestion.question.titleSlug;
+    const title = data.data.activeDailyCodingChallengeQuestion.question.title;
+    console.log("testing from the api", title); 
     const date = data.data.activeDailyCodingChallengeQuestion.date;
+    const difficulty = data.data.activeDailyCodingChallengeQuestion.question.difficulty;
   const link = `https://leetcode.com/problems/${slug}`;
-  
+
    // Store both link and date in local storage together
-   await chrome.storage.local.set({
-    dailyProblem: link,
-    dailyProblemDate: date,
-  })
+   await new Promise((resolve) => {
+    chrome.storage.local.set({
+        dailyProblemTitle: title,
+        dailyProblem: link,
+      dailyProblemDate: date,
+      dailyProblemDifficulty: difficulty
+
+      
+    }, resolve);
+  });
 
   console.log("leetcode potd: ", link);
   console.log("leetcode potd date: ", date);
+  console.log("leetcode potd title: ", title);
   return link;
 }
  catch(err){
