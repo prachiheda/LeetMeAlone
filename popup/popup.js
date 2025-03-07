@@ -26,3 +26,36 @@ const setDailyInfo = (title, difficulty)=>{
         
     }
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const toggleButton = document.getElementById('toggleEnforcement');
+  
+  // Get initial state
+  chrome.runtime.sendMessage({ type: 'GET_ENFORCEMENT_STATE' }, (response) => {
+    updateButtonState(response.isEnforcementActive);
+  });
+  
+  // Handle button click
+  toggleButton.addEventListener('click', () => {
+    const isCurrentlyActive = toggleButton.classList.contains('is-danger');
+    
+    chrome.runtime.sendMessage(
+      { 
+        type: 'SET_ENFORCEMENT_STATE',
+        isActive: !isCurrentlyActive
+      },
+      (response) => {
+        if (response.success) {
+          updateButtonState(!isCurrentlyActive);
+        }
+      }
+    );
+  });
+  
+  // Update button appearance and text using Bulma classes
+  function updateButtonState(isActive) {
+    toggleButton.textContent = isActive ? 'EMERGENCY STOP' : 'RESUME ENFORCEMENT';
+    toggleButton.classList.remove('is-success', 'is-danger');
+    toggleButton.classList.add(isActive ? 'is-danger' : 'is-success');
+  }
+}); 
